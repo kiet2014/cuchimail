@@ -1,17 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
+/* ================= ROOT ================= */
 :root {
   --primary: #6366f1;
-  --primary-glow: rgba(99, 102, 241, 0.2);
+  --primary-glow: rgba(99, 102, 241, 0.25);
   --bg-app: #f1f5f9;
-  --glass: rgba(255, 255, 255, 0.8);
-  --radius-max: 24px;
+  --glass: rgba(255, 255, 255, 0.82);
+  --radius: 18px;
 }
 
+/* ================= RESET ================= */
 * {
   box-sizing: border-box;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.2s ease;
 }
 
 body {
@@ -21,34 +23,171 @@ body {
   overflow: hidden;
 }
 
-/* Hiệu ứng trượt mượt mà */
-.slide-up {
-  animation: slideUp 0.4s cubic-bezier(0, 0, 0.2, 1);
+/* ================= GLASS ================= */
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(18px);
+  border-radius: var(--radius);
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.08),
+    inset 0 1px rgba(255,255,255,0.4);
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
+/* ================= INPUT ================= */
 input, textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
   border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  background: white;
-  padding: 14px;
+  font-size: 14px;
+  margin-bottom: 12px;
 }
 
 input:focus, textarea:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 4px var(--primary-glow);
   outline: none;
+  transform: scale(1.01);
 }
 
+/* ================= BUTTON ================= */
 button {
-  cursor: pointer;
-  border: none;
-  font-weight: 700;
+  padding: 12px 18px;
   border-radius: 14px;
+  background: var(--primary);
+  color: white;
+  font-weight: 700;
+  border: none;
 }
 
-button:hover { transform: translateY(-2px); filter: brightness(1.1); }
+button:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 12px 24px rgba(99,102,241,0.35);
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+/* ================= AUTH ================= */
+span {
+  display: inline-block;
+  margin-top: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+span:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+/* ================= MAIL CARD ================= */
+.mail-card {
+  padding: 14px 18px;
+  border-radius: 16px;
+  margin-bottom: 10px;
+  background: rgba(255,255,255,0.9);
+  cursor: pointer;
+  animation: fadeIn 0.35s ease;
+}
+
+.mail-card:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 16px 30px rgba(0,0,0,0.12);
+}
+
+.mail-card b {
+  display: block;
+  font-size: 14px;
+}
+
+.mail-card div {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* ================= SIDEBAR ================= */
+aside div:hover {
+  background: rgba(99,102,241,0.08);
+  transform: translateX(6px);
+}
+
+/* ================= SEARCH ================= */
+input::placeholder {
+  opacity: 0.55;
+}
+
+input:focus::placeholder {
+  opacity: 0.3;
+}
+
+/* ================= ANIMATIONS ================= */
+.slide-up {
+  animation: slideUp 0.45s cubic-bezier(0,0,0.2,1);
+}
+
+.fade {
+  animation: fadeIn 0.4s ease;
+}
+
+.zoom-in {
+  animation: zoomIn 0.35s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ================= SCROLLBAR ================= */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99,102,241,0.4);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+  body {
+    overflow: auto;
+  }
+
+  .glass {
+    border-radius: 0;
+  }
+
+  .mail-card {
+    border-radius: 12px;
+  }
+}
