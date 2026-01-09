@@ -1,193 +1,88 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+/* Nhúng phông chữ Inter từ Google Fonts để giao diện trông chuyên nghiệp hơn */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-/* ================= ROOT ================= */
 :root {
-  --primary: #6366f1;
-  --primary-glow: rgba(99, 102, 241, 0.25);
-  --bg-app: #f1f5f9;
-  --glass: rgba(255, 255, 255, 0.82);
-  --radius: 18px;
+  /* Màu sắc chủ đạo đồng bộ với App.css */
+  --primary-color: #10b981;
+  --bg-app: #f0fdf4; /* Xanh mint nhẹ */
 }
 
-/* ================= RESET ================= */
 * {
   box-sizing: border-box;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  transition: all 0.2s ease;
+  margin: 0;
+  padding: 0;
+  /* Chặn việc chọn văn bản ở những chỗ không cần thiết để giống app thật */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Cho phép chọn văn bản trong các ô input và nội dung mail */
+input, textarea, .mail-body, .mail-info p {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 body {
   margin: 0;
-  background: var(--bg-app);
-  color: #1e293b;
-  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-app);
+  color: #1f2937;
+  overflow: hidden; /* Ngăn toàn bộ trang bị cuộn lung tung */
 }
 
-/* ================= GLASS ================= */
-.glass {
-  background: var(--glass);
-  backdrop-filter: blur(18px);
-  border-radius: var(--radius);
-  box-shadow:
-    0 20px 40px rgba(0,0,0,0.08),
-    inset 0 1px rgba(255,255,255,0.4);
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-/* ================= INPUT ================= */
-input, textarea {
-  width: 100%;
-  padding: 14px 16px;
-  border-radius: 14px;
-  border: 2px solid #e2e8f0;
-  font-size: 14px;
-  margin-bottom: 12px;
-}
-
-input:focus, textarea:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px var(--primary-glow);
-  outline: none;
-  transform: scale(1.01);
-}
-
-/* ================= BUTTON ================= */
-button {
-  padding: 12px 18px;
-  border-radius: 14px;
-  background: var(--primary);
-  color: white;
-  font-weight: 700;
-  border: none;
-}
-
-button:hover {
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 12px 24px rgba(99,102,241,0.35);
-}
-
-button:active {
-  transform: scale(0.96);
-}
-
-/* ================= AUTH ================= */
-span {
-  display: inline-block;
-  margin-top: 12px;
-  cursor: pointer;
-  font-weight: 600;
-  opacity: 0.7;
-}
-
-span:hover {
-  opacity: 1;
-  text-decoration: underline;
-}
-
-/* ================= MAIL CARD ================= */
-.mail-card {
-  padding: 14px 18px;
-  border-radius: 16px;
-  margin-bottom: 10px;
-  background: rgba(255,255,255,0.9);
-  cursor: pointer;
-  animation: fadeIn 0.35s ease;
-}
-
-.mail-card:hover {
-  transform: translateY(-4px) scale(1.015);
-  box-shadow: 0 16px 30px rgba(0,0,0,0.12);
-}
-
-.mail-card b {
-  display: block;
-  font-size: 14px;
-}
-
-.mail-card div {
-  font-size: 13px;
-  opacity: 0.7;
-}
-
-/* ================= SIDEBAR ================= */
-aside div:hover {
-  background: rgba(99,102,241,0.08);
-  transform: translateX(6px);
-}
-
-/* ================= SEARCH ================= */
-input::placeholder {
-  opacity: 0.55;
-}
-
-input:focus::placeholder {
-  opacity: 0.3;
-}
-
-/* ================= ANIMATIONS ================= */
-.slide-up {
-  animation: slideUp 0.45s cubic-bezier(0,0,0.2,1);
-}
-
-.fade {
-  animation: fadeIn 0.4s ease;
-}
-
-.zoom-in {
-  animation: zoomIn 0.35s ease;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0 }
-  to { opacity: 1 }
-}
-
-@keyframes zoomIn {
-  from {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* ================= SCROLLBAR ================= */
+/* --- TÙY CHỈNH THANH CUỘN (SCROLLBAR) SIÊU ĐẸP --- */
+/* Dành cho Chrome, Safari và Edge */
 ::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(99,102,241,0.4);
-  border-radius: 10px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* ================= MOBILE ================= */
-@media (max-width: 768px) {
-  body {
-    overflow: auto;
-  }
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
 
-  .glass {
-    border-radius: 0;
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+}
 
-  .mail-card {
-    border-radius: 12px;
-  }
+/* Dành cho Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+}
+
+/* --- HIỆU ỨNG AURORA CHO MÀN HÌNH ĐĂNG NHẬP --- */
+.aurora-effect {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 40%);
+  filter: blur(100px);
+}
+
+/* Loại bỏ viền xanh mặc định khi click vào input trên điện thoại */
+input:focus, textarea:focus {
+  outline: none;
+}
+
+/* Đảm bảo ảnh không bị méo */
+img {
+  max-width: 100%;
+  height: auto;
 }
