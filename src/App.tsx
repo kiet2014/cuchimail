@@ -1,232 +1,252 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Send, Star, Trash2, Settings, LogOut, 
+  Search, Plus, Globe, Inbox, Heart, Sparkles, Languages, Mail, Menu, X, User, Lock 
+} from "lucide-react";
 
-/* ================= LANGUAGE ================= */
-const LANG = {
-  vi: {
-    inbox: "Hộp thư đến",
-    sent: "Đã gửi",
-    compose: "Soạn thư",
-    settings: "Cài đặt",
-    search: "Tìm email...",
-    logout: "Đăng xuất",
-    login: "Đăng nhập",
-    register: "Đăng ký",
-    send: "Gửi",
-    cancel: "Hủy",
-    language: "Ngôn ngữ",
-    theme: "Giao diện",
+const TRANSLATIONS: any = {
+  vi: { 
+    inbox: "Hộp thư đến", sent: "Đã gửi", compose: "Soạn thư", setting: "Cài đặt", 
+    logout: "Đăng xuất", search: "Tìm email...", welcome: "Chào mừng", 
+    authSub: "Hệ thống @cuchimail nội bộ", send: "Gửi ngay",
+    login: "Đăng nhập", register: "Đăng ký", noAccount: "Chưa có tài khoản?", hasAccount: "Đã có tài khoản?"
   },
-  en: {
-    inbox: "Inbox",
-    sent: "Sent",
-    compose: "Compose",
-    settings: "Settings",
-    search: "Search mail...",
-    logout: "Logout",
-    login: "Login",
-    register: "Register",
-    send: "Send",
-    cancel: "Cancel",
-    language: "Language",
-    theme: "Theme",
-  },
+  en: { 
+    inbox: "Inbox", sent: "Sent", compose: "Compose", setting: "Settings", 
+    logout: "Logout", search: "Search email...", welcome: "Welcome", 
+    authSub: "@cuchimail system", send: "Send now",
+    login: "Login", register: "Register", noAccount: "New here?", hasAccount: "Already have an account?"
+  }
 };
 
-/* ================= THEMES ================= */
-const THEMES: Record<string, Record<string, string>> = {
-  blue: { "--primary": "#6366f1", "--bg-app": "#f1f5f9" },
-  green: { "--primary": "#22c55e", "--bg-app": "#f0fdf4" },
-  dark: { "--primary": "#38bdf8", "--bg-app": "#020617" },
-};
-
-/* ================= AUTH ================= */
-function Auth() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isRegister, setIsRegister] = useState(false);
-  const [error, setError] = useState("");
-
-  const submit = async () => {
-    setError("");
-    const { error } = isRegister
-      ? await supabase.auth.signUp({ email, password })
-      : await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) setError(error.message);
-  };
-
-  return (
-    <div className="glass slide-up" style={{ height: "100vh", display: "grid", placeItems: "center" }}>
-      <div style={{ width: 320 }}>
-        <h2 style={{ textAlign: "center" }}>CuchiMail</h2>
-
-        <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
-        <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
-
-        {error && <div style={{ color: "red", fontSize: 13 }}>{error}</div>}
-
-        <button style={{ width: "100%" }} onClick={submit}>
-          {isRegister ? "Register" : "Login"}
-        </button>
-
-        <div style={{ textAlign: "center", cursor: "pointer" }} onClick={() => setIsRegister(!isRegister)}>
-          {isRegister ? "← Login" : "Create account"}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ================= MAIN APP ================= */
 export default function App() {
   const [session, setSession] = useState<any>(null);
-  const [view, setView] = useState<"inbox" | "sent" | "compose" | "settings">("inbox");
+  const [view, setView] = useState("inbox");
+  const [lang, setLang] = useState("vi");
   const [mails, setMails] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.vi;
 
-  const [lang, setLang] = useState<"vi" | "en">(
-    () => (localStorage.getItem("lang") as any) || "vi"
-  );
-  const t = LANG[lang];
-
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "blue");
-
-  /* ===== AUTH FIX (QUAN TRỌNG) ===== */
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    supabase.auth.onAuthStateChange((_e, s) => setSession(s));
   }, []);
 
-  /* ===== THEME ===== */
-  useEffect(() => {
-    Object.entries(THEMES[theme]).forEach(([k, v]) =>
-      document.documentElement.style.setProperty(k, v)
-    );
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
-    localStorage.setItem("lang", lang);
-  }, [lang]);
-
-  /* ===== LOAD MAIL ===== */
   useEffect(() => {
     if (!session) return;
-    supabase
-      .from("emails")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => setMails(data || []));
+    const fetch = async () => {
+      const { data } = await supabase.from("emails").select("*").order("created_at", { ascending: false });
+      setMails(data || []);
+    };
+    fetch();
+    const sub = supabase.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: 'emails' }, fetch).subscribe();
+    return () => { supabase.removeChannel(sub) };
   }, [session]);
 
-  if (!session) return <Auth />;
+  if (!session) return <AuthUI t={t} lang={lang} setLang={setLang} />;
+
+  const closeMenu = (v: string) => { setView(v); setIsMenuOpen(false); };
 
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
-      {/* SIDEBAR */}
-      <aside className="glass" style={{ width: 240, padding: 16, margin: 12 }}>
-        <h3>CuchiMail</h3>
-        <div onClick={() => setView("inbox")}>{t.inbox}</div>
-        <div onClick={() => setView("sent")}>{t.sent}</div>
-        <div onClick={() => setView("compose")}>{t.compose}</div>
-        <div onClick={() => setView("settings")}>{t.settings}</div>
+    <div className="cuchi-layout">
+      {/* NÚT MENU MOBILE */}
+      <button className="mobile-menu-btn" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+        {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+      </button>
 
-        <button
-          style={{ marginTop: "auto", color: "red" }}
-          onClick={async () => {
-            await supabase.auth.signOut();
-            setSession(null); // 🔥 FIX
-          }}
-        >
-          {t.logout}
-        </button>
+      {/* SIDEBAR */}
+      <aside className={`cuchi-sidebar ${isMenuOpen ? 'open' : ''}`}>
+        <div className="brand">
+          <div className="logo-icon-bg"><Mail size={24} color="#fff" /></div>
+          <h2>CuchiMail</h2>
+        </div>
+
+        <nav className="cuchi-nav">
+          <NavItem icon={<Inbox size={20}/>} label={t.inbox} active={view === "inbox"} onClick={() => closeMenu("inbox")} />
+          <NavItem icon={<Send size={20}/>} label={t.sent} active={view === "sent"} onClick={() => closeMenu("sent")} />
+          <NavItem icon={<Plus size={20}/>} label={t.compose} active={view === "compose"} onClick={() => closeMenu("compose")} />
+          <NavItem icon={<Settings size={20}/>} label={t.setting} active={view === "setting"} onClick={() => closeMenu("setting")} />
+        </nav>
+
+        <div className="user-info-sidebar">
+           <p>{session.user.email}</p>
+           <button className="btn-logout" onClick={() => supabase.auth.signOut()}>{t.logout}</button>
+        </div>
       </aside>
 
-      {/* MAIN */}
-      <main style={{ flex: 1, padding: 24, overflow: "auto" }}>
-        {view !== "compose" && view !== "settings" && (
-          <input
-            placeholder={t.search}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        )}
-
-        {(view === "inbox" || view === "sent") &&
-          mails
-            .filter(m =>
-              view === "sent"
-                ? m.sender_email === session.user.email
-                : m.recipient_email === session.user.email
-            )
-            .filter(
-              m =>
-                m.subject.toLowerCase().includes(search.toLowerCase()) ||
-                m.body.toLowerCase().includes(search.toLowerCase())
-            )
-            .map(m => (
-              <div key={m.id} className="mail-card">
-                <b>{m.sender_email}</b>
-                <div>{m.subject}</div>
-              </div>
-            ))}
-
-        {view === "compose" && <Compose user={session.user.email} t={t} onDone={() => setView("inbox")} />}
-
-        {view === "settings" && (
-          <div className="glass slide-up" style={{ padding: 20 }}>
-            <b>{t.language}</b>
-            <select value={lang} onChange={e => setLang(e.target.value as any)}>
-              <option value="vi">🇻🇳 Tiếng Việt</option>
-              <option value="en">🇺🇸 English</option>
-            </select>
-
-            <b style={{ display: "block", marginTop: 16 }}>{t.theme}</b>
-            {Object.keys(THEMES).map(k => (
-              <button key={k} onClick={() => setTheme(k)}>
-                {k}
-              </button>
-            ))}
+      {/* NỀN XANH MINT & NỘI DUNG */}
+      <main className="cuchi-main">
+        <header className="cuchi-header">
+          <div className="search-container">
+            <Search size={18} className="search-icon" />
+            <input placeholder={t.search} onChange={(e) => setSearchTerm(e.target.value)} value={searchTerm} />
           </div>
-        )}
+        </header>
+
+        <section className="view-container">
+          <AnimatePresence mode="wait">
+            <motion.div key={view} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} className="view-content">
+              {view === "compose" ? (
+                 <ComposeView t={t} user={session.user.email} onDone={() => setView("inbox")} />
+              ) : view === "setting" ? (
+                 <SettingsView t={t} lang={lang} setLang={setLang} />
+              ) : (
+                 <MailList mails={mails} view={view} user={session.user.email} search={searchTerm} />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </section>
       </main>
     </div>
   );
 }
 
-/* ================= COMPOSE ================= */
-function Compose({ user, onDone, t }: any) {
+/* ================= COMPONENT ĐĂNG NHẬP / ĐĂNG KÝ ================= */
+
+function AuthUI({ t, lang, setLang }: any) {
+  const [isRegister, setIsRegister] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // KIỂM TRA ĐUÔI @CUCHIMAIL
+    if (!email.endsWith("@cuchimail") || email.includes(".com")) {
+      alert("Lỗi: Email phải kết thúc bằng @cuchimail (Ví dụ: kiet@cuchimail)");
+      return;
+    }
+
+    setLoading(true);
+    const { error } = isRegister 
+      ? await supabase.auth.signUp({ email, password })
+      : await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) alert(error.message);
+    setLoading(false);
+  };
+
+  return (
+    <div className="auth-wrapper">
+      <div className="aurora-effect"></div>
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="auth-card glass">
+        <div className="auth-header">
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: "linear" }} className="logo-icon-auth">
+            <Sparkles size={32} color="#10b981" />
+          </motion.div>
+          <h2>{isRegister ? t.register : t.login}</h2>
+          <p>{t.authSub}</p>
+        </div>
+
+        <form onSubmit={handleAuth} className="auth-form">
+          <div className="input-box">
+            <User size={18} />
+            <input type="text" placeholder="username@cuchimail" required onChange={e => setEmail(e.target.value)} />
+          </div>
+          <div className="input-box">
+            <Lock size={18} />
+            <input type="password" placeholder="Password" required onChange={e => setPassword(e.target.value)} />
+          </div>
+          
+          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} disabled={loading} className="btn-auth-submit">
+            {loading ? "..." : (isRegister ? t.register : t.login)}
+          </motion.button>
+        </form>
+
+        <p className="auth-toggle-text">
+          {isRegister ? t.hasAccount : t.noAccount}{" "}
+          <span onClick={() => setIsRegister(!isRegister)}>
+            {isRegister ? t.login : t.register}
+          </span>
+        </p>
+
+        <div className="auth-lang-switcher">
+          <Globe size={14} />
+          <span onClick={() => setLang('vi')} className={lang === 'vi' ? 'active' : ''}>VI</span>
+          <span onClick={() => setLang('en')} className={lang === 'en' ? 'active' : ''}>EN</span>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* ================= CÁC COMPONENT PHỤ KHÁC ================= */
+
+function ComposeView({ t, user, onDone }: any) {
   const [to, setTo] = useState("");
   const [sub, setSub] = useState("");
   const [body, setBody] = useState("");
 
-  const send = async () => {
-    await supabase.from("emails").insert({
-      sender_email: user,
-      recipient_email: to,
-      subject: sub,
-      body,
-    });
+  const handleSend = async () => {
+    if (!to.endsWith("@cuchimail") || to.includes(".com")) {
+      alert("Chỉ gửi được cho đuôi @cuchimail!");
+      return;
+    }
+    await supabase.from("emails").insert({ sender_email: user, recipient_email: to, subject: sub, body });
     onDone();
   };
 
   return (
-    <div className="glass slide-up" style={{ padding: 20 }}>
-      <input placeholder="To" value={to} onChange={e => setTo(e.target.value)} />
-      <input placeholder="Subject" value={sub} onChange={e => setSub(e.target.value)} />
-      <textarea rows={6} value={body} onChange={e => setBody(e.target.value)} />
-      <button onClick={send}>{t.send}</button>
-      <button onClick={onDone}>{t.cancel}</button>
+    <div className="compose-clean">
+      <div className="compose-header">
+        <Sparkles size={20} color="#10b981" />
+        <h3>{t.compose}</h3>
+      </div>
+      <div className="input-group">
+        <input placeholder="Người nhận: user@cuchimail" onChange={e => setTo(e.target.value)} />
+        <small>Lưu ý: Không dùng .com</small>
+      </div>
+      <input placeholder="Chủ đề thư" onChange={e => setSub(e.target.value)} />
+      <textarea placeholder="Nội dung thư của bạn..." rows={10} onChange={e => setBody(e.target.value)} />
+      <button className="btn-send-main" onClick={handleSend}>{t.send}</button>
     </div>
   );
+}
+
+function NavItem({ icon, label, active, onClick }: any) {
+  return (
+    <div className={`cuchi-nav-item ${active ? 'active' : ''}`} onClick={onClick}>
+      <span className="nav-icon">{icon}</span>
+      <span className="nav-label">{label}</span>
+    </div>
+  );
+}
+
+function MailList({ mails, view, user, search }: any) {
+    const list = mails.filter((m: any) => {
+        const isTarget = view === 'sent' ? m.sender_email === user : m.recipient_email === user;
+        return isTarget && m.subject.toLowerCase().includes(search.toLowerCase());
+    });
+    return (
+        <div className="mail-list-clean">
+            {list.length > 0 ? list.map((m: any) => (
+                <div key={m.id} className="mail-item-clean">
+                    <div className="mail-dot"></div>
+                    <div className="mail-info">
+                        <strong>{m.sender_email.split('@')[0]}</strong>
+                        <p>{m.subject}</p>
+                    </div>
+                    <div className="mail-time">{new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                </div>
+            )) : <div className="empty-box">Hộp thư trống <Heart size={16} /></div>}
+        </div>
+    );
+}
+
+function SettingsView({ t, lang, setLang }: any) {
+    return (
+        <div className="setting-page">
+            <h2><Languages size={28}/> {t.setting}</h2>
+            <div className="setting-card glass">
+                <p>{t.lang}</p>
+                <div className="lang-btns">
+                    <button onClick={() => setLang('vi')} className={lang === 'vi' ? 'active' : ''}>Tiếng Việt</button>
+                    <button onClick={() => setLang('en')} className={lang === 'en' ? 'active' : ''}>English</button>
+                </div>
+            </div>
+        </div>
+    );
 }
